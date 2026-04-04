@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/master.swiftdeps"
+  },
+  "/Users/arinaruslanovna/XCUIPage/.build/checkouts/swift-syntax/Sources/SwiftSyntaxMacrosGenericTestSupport/Assertions.swift": {
+    "dependencies": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.d",
+    "object": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.swift.o",
+    "swiftmodule": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions~partial.swiftmodule",
+    "swift-dependencies": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.swiftdeps",
+    "diagnostics": "/Users/arinaruslanovna/XCUIPage/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.dia"
+  }
+}
