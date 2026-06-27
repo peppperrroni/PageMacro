@@ -1,37 +1,42 @@
 import XCTest
 
+@MainActor
 final class LoginFlowTests: XCTestCase {
     private var app: XCUIApplication!
     private var login: LoginPage!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launch()
         login = LoginPage(app: app)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         app.terminate()
-        super.tearDown()
+        try await super.tearDown()
     }
 
     func testLoginWithValidCredentials() {
-        login.email.tap()
-        login.email.typeText("user@example.com")
-
-        login.password.tap()
-        login.password.typeText("secret123")
-
-        login.loginButton.tap()
-
-        XCTAssertTrue(login.welcomeLabel.waitForExistence(timeout: 2))
+        login
+            .tapEmail()
+            .typeTextIntoEmail("user@example.com")
+            .tapPassword()
+            .typeTextIntoPassword("secret123")
+            .assertLoginButtonExists()
+            .assertLoginButtonEnabled()
+            .tapLoginButton()
+            .assertWelcomeLabelExists(timeout: 5)
     }
 
     func testLoginButtonExistsOnLaunch() {
-        XCTAssertTrue(login.loginButton.exists)
-        XCTAssertTrue(login.email.exists)
-        XCTAssertTrue(login.password.exists)
+        login.verifyDefaultScreen()
+    }
+
+    func testEmailFieldPlaceholder() {
+        login
+            .assertEmailPlaceholder("Email")
+            .assertPasswordPlaceholder("Password")
     }
 }

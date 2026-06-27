@@ -7,34 +7,38 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            if isLoggedIn {
-                Text("Welcome!")
-                    .accessibilityIdentifier("welcome_label")
-            } else {
-                VStack(spacing: 20) {
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .autocapitalization(.none)
+            ScrollView {
+                if isLoggedIn {
+                    Text("Welcome!")
+                        .accessibilityIdentifier("welcome_label")
                         .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(8)
-                        .accessibilityIdentifier("email")
+                } else {
+                    VStack(spacing: 20) {
+                        TextField("Email", text: $email)
+                            .textContentType(.emailAddress)
+                            .autocapitalization(.none)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                            .accessibilityIdentifier("email")
 
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(8)
-                        .accessibilityIdentifier("password")
+                        SecureField("Password", text: $password)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                            .accessibilityIdentifier("password")
 
-                    Button("Log In") {
-                        isLoggedIn = !email.isEmpty && !password.isEmpty
+                        Button("Log In") {
+                            isLoggedIn = !email.isEmpty && !password.isEmpty
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("login")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("login")
+                    .padding()
                 }
-                .padding()
-                .navigationTitle("Sign In")
             }
+            .accessibilityIdentifier("loginScroll")
+            .navigationTitle("Sign In")
         }
     }
 }

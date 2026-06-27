@@ -3,30 +3,30 @@ import PackageDescription
 import CompilerPluginSupport
 
 let package = Package(
-    name: "XCUIPage",
+    name: "PageMacro",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
-        .library(name: "XCUIPage", targets: ["XCUIPage"]),
+        .library(name: "PageMacro", targets: ["PageMacro"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
     ],
     targets: [
         .macro(
-            name: "XCUIPageMacros",
+            name: "PageMacroMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
         .target(
-            name: "XCUIPage",
-            dependencies: ["XCUIPageMacros"]
+            name: "PageMacro",
+            dependencies: ["PageMacroMacros"]
         ),
         .testTarget(
-            name: "XCUIPageTests",
+            name: "PageMacroTests",
             dependencies: [
-                "XCUIPageMacros",
+                "PageMacroMacros",
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
