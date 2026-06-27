@@ -14,15 +14,50 @@ struct LoginPage {
     var loginButton: XCUIElement
 }
 
-// That's it. tapEmail(), typeTextIntoEmail(_:), tapLoginButton(),
+// tapEmail(), typeTextIntoEmail(_:), tapLoginButton(),
 // assertLoginButtonExists(timeout:) — all generated.
 ```
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Why PageMacro](#why-pagemacro)
+- [Quick Start](#quick-start)
+- [@Page](#page)
+- [@Element](#element)
+- [Locators](#locators)
+- [Screen Verification](#screen-verification)
+- [Scoped Pages](#scoped-pages)
+- [Element Lists](#element-lists)
+- [Multi-App Support](#multi-app-support)
+- [Generated Methods](#generated-methods)
+- [Default Actions per Type](#default-actions-per-type)
+- [Supported Element Types](#supported-element-types)
+
+---
+
+## Installation
+
+### Swift Package Manager
+
+```swift
+.package(url: "https://github.com/peppperrroni/PageMacro", from: "2.0.0")
+```
+
+```swift
+.target(
+    name: "MyAppUITests",
+    dependencies: ["PageMacro"]
+)
+```
+
+**Requirements:** Swift 6.0+ · Xcode 16+ · iOS 17+
 
 ---
 
 ## Why PageMacro
 
-Without tooling, every page object is hundreds of lines of near-identical boilerplate:
+Without tooling, every page object is hundreds of lines of boilerplate:
 
 ```swift
 struct LoginPage {
@@ -40,26 +75,7 @@ struct LoginPage {
 }
 ```
 
-PageMacro replaces all of it with declarations:
-
-```swift
-@Page
-struct LoginPage {
-    @Element(.textField, .id("email"))
-    var email: XCUIElement
-
-    @Element(.secureTextField, .id("password"))
-    var password: XCUIElement
-
-    @Element(.button, .id("login"))
-    var loginButton: XCUIElement
-
-    @Element(.staticText, .id("welcome_label"), actions: [.assertExists, .assertLabel])
-    var welcomeLabel: XCUIElement
-}
-```
-
-The result is a fluent, chainable API that reads like a test script:
+PageMacro replaces all of it with declarations. The result is a fluent, chainable API that reads like a test script:
 
 ```swift
 func testLoginFlow() {
@@ -75,45 +91,30 @@ func testLoginFlow() {
 
 ---
 
-## Features
+## Quick Start
 
-- **Zero boilerplate** — element accessors, tap/type/swipe/assert methods all generated
-- **Fluent API** — every method returns `Self` for chaining
-- **Compile-time generation** — no scripts, no templates, no separate build step
-- **Xcode autocomplete** — every generated method has a `///` doc comment
-- **Flexible locators** — identifier, label, predicate, index, or `.firstMatch`
-- **Smart defaults** — per-type action sets out of the box, fully overridable
-- **Screen verification** — mark key elements with `verify: true`, get `verifyDefaultScreen(timeout:)` for free
-- **Element lists / reusable row objects** — model repeated elements as typed row components with `@ElementList`
-- **Scoped queries** — narrow all element lookups to a container with `@Page(scope:)`
-- **Multi-app support** — target any app by bundle ID with `@Page(bundle:)`
+```swift
+import PageMacro
+
+@Page
+struct LoginPage {
+    @Element(.textField, .id("email"), verify: true)
+    var email: XCUIElement
+
+    @Element(.secureTextField, .id("password"), verify: true)
+    var password: XCUIElement
+
+    @Element(.button, .id("login"), verify: true)
+    var loginButton: XCUIElement
+
+    @Element(.staticText, .id("welcome"), actions: [.assertExists, .assertLabel])
+    var welcomeLabel: XCUIElement
+}
+```
 
 ---
 
-## Installation
-
-### Swift Package Manager
-
-```swift
-// Package.swift
-.package(url: "https://github.com/peppperrroni/PageMacro", from: "1.0.0")
-```
-
-```swift
-// In your UITest target:
-.target(
-    name: "MyAppUITests",
-    dependencies: ["PageMacro"]
-)
-```
-
-**Requirements:** Swift 6.0+ · Xcode 16+ · iOS 17+
-
----
-
-## Usage
-
-### `@Page`
+## @Page
 
 Applied to a struct. Generates `app`, `_scope`, and two initializers:
 
@@ -122,23 +123,15 @@ Applied to a struct. Generates `app`, `_scope`, and two initializers:
 struct LoginPage { ... }
 
 LoginPage()              // uses XCUIApplication()
-LoginPage(app: myApp)    // custom instance — useful when you need launch arguments
+LoginPage(app: myApp)    // custom instance
 ```
 
-Need launch arguments? Pass your configured instance:
+---
+
+## @Element
 
 ```swift
-let app = XCUIApplication()
-app.launchArguments = ["--reset-state"]
-app.launch()
-
-LoginPage(app: app).verifyDefaultScreen()
-```
-
-### `@Element`
-
-```swift
-@Element(_ type: ElementType, _ locator: Locator? = nil, actions: [ElementAction]? = nil, verify: Bool = false)
+@Element(_ type: ElementType, _ locator: Locator?, actions: [ElementAction]?, verify: Bool)
 ```
 
 | Parameter | Description |
@@ -148,7 +141,9 @@ LoginPage(app: app).verifyDefaultScreen()
 | `actions` | Methods to generate. Defaults per type. Pass `[]` to suppress all |
 | `verify` | Include in `verifyDefaultScreen()` |
 
-### Locators
+---
+
+## Locators
 
 | Locator | Use when |
 |---|---|
@@ -160,104 +155,101 @@ LoginPage(app: app).verifyDefaultScreen()
 | `.index(2)` | Nth element, no string filter |
 | _(omitted)_ | Single element of that type in scope |
 
-### Screen Verification
+Expression-based identifiers are also supported:
 
-Mark elements that define the screen with `verify: true`. `@Page` generates `verifyDefaultScreen(timeout:)` that asserts all of them exist:
+```swift
+@Element(.button, .id(AccessibilityID.login.rawValue))
+var loginButton: XCUIElement
+```
+
+If a locator argument is provided but cannot be parsed, the macro throws a compile-time error instead of silently falling back.
+
+---
+
+## Screen Verification
+
+Mark elements that define the screen with `verify: true`. `@Page` generates `verifyDefaultScreen(timeout:)`:
 
 ```swift
 @Page
 struct LoginPage {
     @Element(.textField, .id("email"), verify: true)
     var email: XCUIElement
-    @Element(.secureTextField, .id("password"), verify: true)
-    var password: XCUIElement
+
     @Element(.button, .id("login"), verify: true)
     var loginButton: XCUIElement
 }
 
 LoginPage().verifyDefaultScreen()           // immediate
-LoginPage().verifyDefaultScreen(timeout: 5) // wait up to 5 s per element
+LoginPage().verifyDefaultScreen(timeout: 5) // wait up to 5s per element
 ```
 
-Only generated when at least one element has `verify: true`.
+---
 
-### Scoped Pages
+## Scoped Pages
 
 Narrow all element queries to a container:
 
 ```swift
 @Page(scope: .scrollView(id: "loginScroll"))
 struct LoginPage {
-    @Element(.textField, .id("email"))  // queries inside loginScroll, not the full app
+    @Element(.textField, .id("email"))  // queries inside loginScroll
     var email: XCUIElement
 }
 ```
 
-Supported container types: `.scrollView(id:)`, `.table(id:)`, `.collectionView(id:)`, `.alert(label:)`, and more.
+Supported: `.scrollView`, `.table`, `.collectionView`, `.alert`, `.navigationBar`, `.tabBar`, `.toolbar`, `.webView`, `.picker`, `.datePicker`, `.view` — each with optional `id:`, `label:`, `index:`.
 
-### Reusable Elements / Element Lists
+---
 
-When a container has repeated elements with the same structure, model each element as an `ElementComponent` and use `@ElementList` to generate a typed accessor. The first argument specifies the element type to query:
+## Element Lists
+
+Model repeated elements with the same structure using `@ElementList`:
 
 ```swift
-@Page
-struct SearchResultsPage {
-    @ElementList(.cell, .collectionView(id: "property_results"), row: PropertyCell.self)
-    var properties: ElementList<PropertyCell>
-}
-
 struct PropertyCell: ElementComponent {
     let app: XCUIApplication
-    let _scope: XCUIElement   // the cell element
-
-    var titleLabel: XCUIElement {
-        _scope.staticTexts["property_title"].firstMatch
-    }
-    var priceLabel: XCUIElement {
-        _scope.staticTexts["property_price"].firstMatch
-    }
+    let _scope: XCUIElement
 
     init(app: XCUIApplication, scope: XCUIElement) {
         self.app = app
         self._scope = scope
     }
+
+    @Element(.staticText, .id("property_title"))
+    var title: XCUIElement
+
+    @Element(.staticText, .id("property_price"))
+    var price: XCUIElement
 }
-```
 
-Access elements by index, identifier, or text content:
-
-```swift
-func testSearchResults() {
-    let page = SearchResultsPage()
-
-    // By index
-    let firstCell = page.properties[0]
-    XCTAssertTrue(firstCell.titleLabel.exists)
-
-    // By accessibility identifier
-    let specific = page.properties[id: "property_42"]
-    XCTAssertEqual(specific.priceLabel.label, "$350,000")
-
-    // By text content
-    let match = page.properties.containing("Beach House")
-    match.element.tap()
-
-    // Count
-    XCTAssertGreaterThan(page.properties.count, 0)
-}
-```
-
-`@ElementList` works with or without a container. Without a container, it queries `_scope.{elementType}` directly (useful inside a scoped page):
-
-```swift
-@Page(scope: .table(id: "results"))
+@Page
 struct ResultsPage {
-    @ElementList(.cell, row: ResultCell.self)
-    var results: ElementList<ResultCell>
+    @ElementList(.cell, .collectionView(id: "results"), row: PropertyCell.self)
+    var properties: ElementList<PropertyCell>
 }
 ```
 
-You can also query non-cell element types:
+### Access by index, id, or text
+
+```swift
+// By index
+page.properties[0].tap()
+
+// By accessibility identifier
+page.properties[id: "property_42"]
+    .assertTitleLabel("Modern 2 bed flat")
+
+// By contained text
+page.properties.containing("Beach House").tap()
+
+// Count
+XCTAssertGreaterThan(page.properties.count, 0)
+```
+
+### Without a container
+
+When used inside a scoped page or when elements are at the root level:
 
 ```swift
 @Page
@@ -267,18 +259,32 @@ struct SettingsPage {
 }
 ```
 
-#### `ElementList` API
+### ElementComponent protocol
+
+Every `ElementComponent` conformer gets these methods for free:
+
+| Method | Description |
+|---|---|
+| `tap()` | Taps the element |
+| `assertExists(timeout:)` | Asserts the element exists |
+| `assertNotExists()` | Asserts the element does not exist |
+| `element` | The underlying `XCUIElement` |
+| `exists` | Whether the element exists |
+
+### ElementList API
 
 | Method / Subscript | Returns | Description |
 |---|---|---|
-| `count` | `Int` | Number of elements matching the query |
-| `[index]` | `Row` | Element at the given index (zero-based) |
-| `[id: "x"]` | `Row` | First element matching the accessibility identifier |
+| `count` | `Int` | Number of matching elements |
+| `[index]` | `Row` | Element at zero-based index |
+| `[id: "x"]` | `Row` | First element matching the identifier |
 | `matching(identifier:)` | `Row` | Same as subscript by id |
 | `matching(_: NSPredicate)` | `Row` | First element matching a predicate |
 | `containing("text")` | `Row` | First element whose label contains the text |
 
-### Testing Other Apps
+---
+
+## Multi-App Support
 
 ```swift
 @Page(bundle: "com.apple.mobilesafari")
@@ -287,44 +293,42 @@ struct SafariPage {
     var doneButton: XCUIElement
 }
 
-SafariPage().tapDoneButton()  // bundle ID is baked in at compile time
+SafariPage().tapDoneButton()
 ```
 
 ---
 
 ## Generated Methods
 
-Given `var submitButton: XCUIElement`, `@Element(.button, .id("submit"))` generates:
+Given `@Element(.button, .id("submit"))` on `var submitButton`:
 
-| Action | Method |
+| Action | Generated Method |
 |---|---|
-| `.tap` | `tapSubmitButton() -> Self` |
-| `.doubleTap` | `doubleTapSubmitButton() -> Self` |
-| `.longPress` | `longPressSubmitButton() -> Self` |
-| `.typeText` | `typeTextIntoSubmitButton(_ text: String) -> Self` |
-| `.clearText` | `clearSubmitButton() -> Self` |
-| `.swipeUp/Down/Left/Right` | `swipeUp/Down/Left/RightSubmitButton() -> Self` |
-| `.scrollToVisible` | `scrollToVisibleSubmitButton() -> Self` |
-| `.assertExists` | `assertSubmitButtonExists(timeout:file:line:) -> Self` |
-| `.assertNotExists` | `assertSubmitButtonNotExists(timeout:file:line:) -> Self` |
-| `.assertDisappear` | `assertSubmitButtonDisappear(timeout:file:line:) -> Self` |
-| `.assertEnabled` | `assertSubmitButtonEnabled(timeout:file:line:) -> Self` |
-| `.assertDisabled` | `assertSubmitButtonDisabled(timeout:file:line:) -> Self` |
-| `.assertSelected` | `assertSubmitButtonSelected(timeout:file:line:) -> Self` |
-| `.assertNotSelected` | `assertSubmitButtonNotSelected(timeout:file:line:) -> Self` |
-| `.assertValue` | `assertSubmitButtonValue(_ expected:timeout:file:line:) -> Self` |
-| `.assertLabel` | `assertSubmitButtonLabel(_ expected:timeout:file:line:) -> Self` |
-| `.assertPlaceholder` | `assertSubmitButtonPlaceholder(_ expected:file:line:) -> Self` |
+| `.tap` | `tapSubmitButton()` |
+| `.doubleTap` | `doubleTapSubmitButton()` |
+| `.longPress` | `longPressSubmitButton()` |
+| `.typeText` | `typeTextIntoSubmitButton(_ text:)` |
+| `.clearText` | `clearSubmitButton()` |
+| `.swipeUp/Down/Left/Right` | `swipeUpSubmitButton()` etc. |
+| `.scrollToVisible` | `scrollToVisibleSubmitButton()` |
+| `.assertExists` | `assertSubmitButtonExists(timeout:)` |
+| `.assertNotExists` | `assertSubmitButtonNotExists(timeout:)` |
+| `.assertDisappear` | `assertSubmitButtonDisappear(timeout:)` |
+| `.assertEnabled` | `assertSubmitButtonEnabled(timeout:)` |
+| `.assertDisabled` | `assertSubmitButtonDisabled(timeout:)` |
+| `.assertSelected` | `assertSubmitButtonSelected(timeout:)` |
+| `.assertNotSelected` | `assertSubmitButtonNotSelected(timeout:)` |
+| `.assertValue` | `assertSubmitButtonValue(_ expected:)` |
+| `.assertLabel` | `assertSubmitButtonLabel(_ expected:)` |
+| `.assertPlaceholder` | `assertSubmitButtonPlaceholder(_ expected:)` |
+| `.assertOn` | `assertSubmitButtonOn(timeout:)` |
+| `.assertOff` | `assertSubmitButtonOff(timeout:)` |
 
-All assertion methods take an optional `timeout: TimeInterval?` — omit for an immediate check, pass a value to poll:
+All methods return `Self` for chaining. All assertion methods accept an optional `timeout`.
 
-```swift
-login.assertLoginButtonExists()          // immediate
-login.assertWelcomeLabelExists(timeout: 5) // polls up to 5 s
-login.assertLoginButtonEnabled(timeout: 2) // waits until actually enabled
-```
+---
 
-### Default actions per element type
+## Default Actions per Type
 
 | Element type | Default actions |
 |---|---|
@@ -333,7 +337,7 @@ login.assertLoginButtonEnabled(timeout: 2) // waits until actually enabled
 | `.button` | `tap`, `assertExists`, `assertEnabled`, `assertDisabled` |
 | `.staticText` | `assertExists`, `assertLabel` |
 | `.cell` | `tap`, `assertExists` |
-| `.toggle` | `tap`, `assertExists`, `assertSelected`, `assertNotSelected` |
+| `.toggle` | `tap`, `assertExists`, `assertOn`, `assertOff` |
 | `.scrollView`, `.table`, `.collectionView` | `swipeUp`, `swipeDown`, `assertExists` |
 | everything else | `tap`, `assertExists` |
 
